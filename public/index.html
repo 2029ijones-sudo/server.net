@@ -1,89 +1,297 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Home - Explore Servers</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Platform Dashboard</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    ul { list-style-type: none; padding: 0; }
-    li { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    /* Basic styling for the dashboard */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+    }
+
+    /* Navigation sidebar */
+    #sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 220px;
+      height: 100%;
+      background: #1e1e2f;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding-top: 20px;
+    }
+
+    #sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.4rem;
+    }
+
+    #sidebar button {
+      background: none;
+      border: none;
+      color: #fff;
+      text-align: left;
+      padding: 12px 20px;
+      margin: 5px 0;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    #sidebar button:hover {
+      background: #343454;
+      border-radius: 5px;
+    }
+
+    /* Main content */
+    #main {
+      margin-left: 240px;
+      padding: 20px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    /* Cards for servers and alerts */
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .card button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-family: inherit;
+    }
+
+    button {
+      background-color: #1e1e2f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #343454;
+    }
   </style>
 </head>
 <body>
-  <h1>Welcome to the Server Platform</h1>
-  <a href="/login.html">Login</a> | <a href="/register.html">Register</a>
-  
-  <h2>Explore Public Servers</h2>
-  <ul id="exploreList"></ul>
 
-  <h2>Upload a File to Storage</h2>
-  <input type="text" id="fileName" placeholder="File name (e.g., test.html)">
-  <textarea id="fileContent" placeholder="File content here..." rows="5" cols="50"></textarea><br>
-  <button id="uploadBtn">Upload File</button>
-  <p id="uploadResult"></p>
+  <!-- Sidebar Navigation -->
+  <div id="sidebar">
+    <h2>Dashboard</h2>
+    <button onclick="showSection('overview')">Overview</button>
+    <button onclick="showSection('profile')">Profile</button>
+    <button onclick="showSection('servers')">Servers</button>
+    <button onclick="showSection('alerts')">Alerts</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main">
+
+    <!-- Overview Section -->
+    <div id="overview" class="section active">
+      <h1>Welcome to your Dashboard</h1>
+      <p id="welcomeMsg">Loading user info...</p>
+    </div>
+
+    <!-- Profile Section -->
+    <div id="profile" class="section">
+      <h1>Profile</h1>
+      <div class="card">
+        <p>Username: <span id="username">Loading...</span></p>
+        <p>Email: <span id="email">Loading...</span></p>
+        <label for="newPassword">Change Password:</label>
+        <input type="password" id="newPassword" placeholder="New password">
+        <button onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+
+    <!-- Servers Section -->
+    <div id="servers" class="section">
+      <h1>Your Servers</h1>
+      <div class="card">
+        <input type="text" id="serverName" placeholder="Server Name">
+        <textarea id="serverFiles" placeholder="Paste your server HTML/JS content here"></textarea>
+        <button onclick="createServer()">Create Server</button>
+      </div>
+      <div id="serversList"></div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div id="alerts" class="section">
+      <h1>Your Alerts</h1>
+      <div id="alertsList"></div>
+    </div>
+
+  </div>
 
   <script>
-    async function loadExplore() {
-      try {
-        const res = await fetch('/.netlify/functions/getExplore');
-        const data = await res.json();
-        const exploreList = document.getElementById('exploreList');
-        exploreList.innerHTML = '';
+    let user;
 
-        if (!data.servers || data.servers.length === 0) {
-          exploreList.innerHTML = '<li>No public servers yet.</li>';
+    // Show selected section
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+    }
+
+    // Load user profile from backend
+    async function loadProfile() {
+      try {
+        const res = await fetch('/.netlify/functions/getCurrentUser', { method: 'GET' });
+        const data = await res.json();
+
+        if (!data.user) {
+          alert('You are not logged in');
+          window.location.href = '/login.html';
           return;
         }
 
-        data.servers.forEach(s => {
-          const li = document.createElement('li');
-          li.innerHTML = `
-            <strong>${s.name}</strong><br>
-            Created: ${new Date(s.created_at).toLocaleString()}<br>
-            <a href="/server.html?id=${s.id}">View Server</a>
+        user = data.user;
+        document.getElementById('username').innerText = user.username;
+        document.getElementById('email').innerText = user.email;
+        document.getElementById('welcomeMsg').innerText = `Hello, ${user.username}!`;
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      }
+    }
+
+    // Change password
+    async function changePassword() {
+      const newPassword = document.getElementById('newPassword').value;
+      if (!newPassword) return alert('Enter a new password');
+
+      const res = await fetch('/.netlify/functions/changePassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, newPassword })
+      });
+      const data = await res.json();
+      alert(data.message || 'Password updated');
+    }
+
+    // Load user servers
+    async function loadServers() {
+      try {
+        const res = await fetch('/.netlify/functions/getExplore');
+        const data = await res.json();
+        const serversList = document.getElementById('serversList');
+        serversList.innerHTML = '';
+
+        data.servers.filter(s => s.owner_id === user.id).forEach(s => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <strong>${s.name}</strong>
+            <button onclick="deleteServer('${s.id}')">Delete</button>
+            <a href="/server.html?id=${s.id}" target="_blank">View</a>
           `;
-          exploreList.appendChild(li);
+          serversList.appendChild(div);
         });
       } catch (err) {
         console.error('Failed to load servers:', err);
       }
     }
 
-    loadExplore();
+    // Create server
+    async function createServer() {
+      const name = document.getElementById('serverName').value;
+      const files = document.getElementById('serverFiles').value;
 
-    // Example: upload a file to Supabase storage
-    document.getElementById('uploadBtn').addEventListener('click', async () => {
-      const fileName = document.getElementById('fileName').value.trim();
-      const fileContent = document.getElementById('fileContent').value;
+      if (!name || !files) return alert('Enter server name and content');
 
-      if (!fileName || !fileContent) {
-        alert('Please provide both file name and content.');
-        return;
-      }
+      // Upload file via Netlify function
+      const res = await fetch('/.netlify/functions/uploadFile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: `${name}.html`, fileContent: files })
+      });
+      const uploadData = await res.json();
+      if (uploadData.error) return alert(uploadData.error);
 
-      try {
-        const res = await fetch('/.netlify/functions/uploadFile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName, fileContent })
-        });
+      // Save server in database
+      await fetch('/.netlify/functions/createServer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner_id: user.id, name, files })
+      });
 
-        const result = await res.json();
-        if (res.ok) {
-          document.getElementById('uploadResult').textContent = `File "${fileName}" uploaded successfully!`;
-        } else {
-          document.getElementById('uploadResult').textContent = `Error: ${result.error}`;
-        }
-      } catch (err) {
-        console.error('Upload failed:', err);
-        document.getElementById('uploadResult').textContent = 'Upload failed.';
-      }
-    });
-
-    // Redirect after registration
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('registered') === 'true') {
-      window.location.href = '/profile.html';
+      alert('Server created!');
+      loadServers();
     }
+
+    // Delete server
+    async function deleteServer(id) {
+      if (!confirm('Are you sure you want to delete this server?')) return;
+      await fetch('/.netlify/functions/deleteServer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ server_id: id })
+      });
+      loadServers();
+    }
+
+    // Load alerts
+    async function loadAlerts() {
+      try {
+        const res = await fetch(`/ .netlify/functions/getAlerts?user_id=${user?.id}`);
+        const data = await res.json();
+        const alertsList = document.getElementById('alertsList');
+        alertsList.innerHTML = '';
+        data.alerts.forEach(a => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerText = `[${a.type}] ${a.content}`;
+          alertsList.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Failed to load alerts:', err);
+      }
+    }
+
+    // Logout
+    function logout() {
+      fetch('/.netlify/functions/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    }
+
+    // Initial load
+    loadProfile().then(() => {
+      loadServers();
+      loadAlerts();
+    });
   </script>
+
 </body>
 </html>
