@@ -23,26 +23,74 @@
       flex-direction: column;
       padding-top: 20px;
     }
-    #sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 1.4rem; }
-    #sidebar button {
-      background: none; border: none; color: #fff; text-align: left;
-      padding: 12px 20px; margin: 5px 0; cursor: pointer; font-size: 1rem;
+    #sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.4rem;
     }
-    #sidebar button:hover { background: #343454; border-radius: 5px; }
-    #main { margin-left: 240px; padding: 20px; }
-    .section { display: none; }
-    .section.active { display: block; }
+    #sidebar button {
+      background: none;
+      border: none;
+      color: #fff;
+      text-align: left;
+      padding: 12px 20px;
+      margin: 5px 0;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    #sidebar button:hover {
+      background: #343454;
+      border-radius: 5px;
+    }
+    #main {
+      margin-left: 240px;
+      padding: 20px;
+    }
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
     h1 { margin-top: 0; }
     .card {
-      background: #fff; padding: 15px; margin-bottom: 15px;
-      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .card button { margin-top: 8px; padding: 6px 12px; cursor: pointer; }
-    input, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; }
-    button { background-color: #1e1e2f; color: #fff; border: none; border-radius: 4px; padding: 10px 15px; cursor: pointer; }
-    button:hover { background-color: #343454; }
-    #loginSignup { max-width: 400px; margin: 50px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    #loginSignup input { margin-bottom: 10px; }
+    .card button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-family: inherit;
+    }
+    button {
+      background-color: #1e1e2f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #343454;
+    }
+
+    /* Login/Signup card override */
+    #loginSignup {
+      max-width: 400px;
+      margin: 50px auto;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -59,13 +107,15 @@
 
   <!-- Main Content -->
   <div id="main">
-    <!-- Login/Signup placeholder (hidden by default) -->
-    <div id="loginSignup" style="display:none;">
+
+    <!-- Login/Signup Form -->
+    <div id="loginSignup" class="card">
       <h1>Login</h1>
       <input type="email" id="loginEmail" placeholder="Email">
       <input type="password" id="loginPassword" placeholder="Password">
       <button onclick="login()">Login</button>
       <p>Don't have an account? <a href="#" onclick="toggleSignup()">Sign Up</a></p>
+
       <div id="signupForm" style="display:none;">
         <h2>Sign Up</h2>
         <input type="text" id="signupUsername" placeholder="Username">
@@ -76,11 +126,13 @@
       </div>
     </div>
 
-    <!-- Dashboard Sections -->
-    <div id="overview" class="section active">
+    <!-- Overview Section -->
+    <div id="overview" class="section">
       <h1>Welcome to your Dashboard</h1>
       <p id="welcomeMsg">Loading user info...</p>
     </div>
+
+    <!-- Profile Section -->
     <div id="profile" class="section">
       <h1>Profile</h1>
       <div class="card">
@@ -91,6 +143,8 @@
         <button onclick="changePassword()">Update Password</button>
       </div>
     </div>
+
+    <!-- Servers Section -->
     <div id="servers" class="section">
       <h1>Your Servers</h1>
       <div class="card">
@@ -100,92 +154,113 @@
       </div>
       <div id="serversList"></div>
     </div>
+
+    <!-- Alerts Section -->
     <div id="alerts" class="section">
       <h1>Your Alerts</h1>
       <div id="alertsList"></div>
     </div>
+
   </div>
 
   <script>
     let user;
 
-    // Toggle signup form visibility
-    function toggleSignup() {
-      const form = document.getElementById('signupForm');
-      form.style.display = form.style.display === 'none' ? 'block' : 'none';
-    }
-
-    // Show selected section
     function showSection(sectionId) {
       document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(sectionId).classList.add('active');
+      const sec = document.getElementById(sectionId);
+      if (sec) sec.classList.add('active');
     }
 
-    // Initial user check
-    async function init() {
-      try {
-        const res = await fetch('/.netlify/functions/getCurrentUser', { method: 'GET' });
-        const data = await res.json();
-
-        if (!data.user) {
-          document.getElementById('loginSignup').style.display = 'block';
-          document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
-          return;
-        }
-
-        user = data.user;
-        document.getElementById('username').innerText = user.username;
-        document.getElementById('email').innerText = user.email;
-        document.getElementById('welcomeMsg').innerText = `Hello, ${user.username}!`;
-        loadServers();
-        loadAlerts();
-
-      } catch (err) {
-        console.error('Error checking user:', err);
-      }
+    function toggleSignup() {
+      const login = document.getElementById('loginEmail').parentElement;
+      const signup = document.getElementById('signupForm');
+      signup.style.display = signup.style.display === 'none' ? 'block' : 'none';
     }
 
-    // Login
     async function login() {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
+      if (!email || !password) return alert('Enter email and password');
+
       const res = await fetch('/.netlify/functions/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password})
       });
       const data = await res.json();
-      if (data.user) location.reload();
-      else alert(data.error || 'Login failed');
+      if (data.user) {
+        user = data.user;
+        document.getElementById('loginSignup').style.display = 'none';
+        document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+        document.getElementById('overview').style.display = 'block';
+        loadProfile();
+        loadServers();
+        loadAlerts();
+      } else {
+        alert(data.error || 'Login failed');
+      }
     }
 
-    // Signup
     async function signup() {
       const username = document.getElementById('signupUsername').value;
       const email = document.getElementById('signupEmail').value;
       const password = document.getElementById('signupPassword').value;
+      if (!username || !email || !password) return alert('Complete all fields');
+
       const res = await fetch('/.netlify/functions/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, email, password})
       });
       const data = await res.json();
-      if (data.message) alert(data.message);
-      else alert(data.error || 'Registration failed');
+      if (data.user) {
+        alert('Registered! Please login.');
+        toggleSignup();
+      } else {
+        alert(data.error || 'Registration failed');
+      }
     }
 
-    // Load profile, servers, alerts, change password, delete/create server functions remain unchanged
-    async function loadProfile() { /* ... existing code ... */ }
-    async function changePassword() { /* ... existing code ... */ }
-    async function loadServers() { /* ... existing code ... */ }
-    async function createServer() { /* ... existing code ... */ }
-    async function deleteServer(id) { /* ... existing code ... */ }
-    async function loadAlerts() { /* ... existing code ... */ }
-    function logout() { fetch('/.netlify/functions/logout', { method: 'POST' }); location.reload(); }
+    async function loadProfile() {
+      try {
+        const res = await fetch('/.netlify/functions/getCurrentUser', { method: 'GET' });
+        const data = await res.json();
+        if (!data.user) {
+          document.getElementById('loginSignup').style.display = 'block';
+          return;
+        }
+        user = data.user;
+        document.getElementById('username').innerText = user.username;
+        document.getElementById('email').innerText = user.email;
+        document.getElementById('welcomeMsg').innerText = `Hello, ${user.username}!`;
+        document.getElementById('loginSignup').style.display = 'none';
+        showSection('overview');
+      } catch(err) {
+        console.error(err);
+      }
+    }
 
-    // Run initial check
-    init();
+    async function logout() {
+      try {
+        await fetch('/.netlify/functions/logout', { method: 'POST' });
+        user = null;
+        document.getElementById('loginSignup').style.display = 'block';
+        document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+      } catch(err) { console.error(err); }
+    }
+
+    // Keep existing dashboard functions
+    async function changePassword() { /* your previous code */ }
+    async function loadServers() { /* your previous code */ }
+    async function createServer() { /* your previous code */ }
+    async function deleteServer(id) { /* your previous code */ }
+    async function loadAlerts() { /* your previous code */ }
+
+    // Initial load
+    loadProfile().then(() => {
+      if (user) { loadServers(); loadAlerts(); }
+    });
   </script>
-
 </body>
 </html>
