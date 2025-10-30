@@ -1,1 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home - Explore Servers</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Server Platform</h1>
+  <a href="/login.html">Login</a> | <a href="/register.html">Register</a>
+  <h2>Explore Public Servers</h2>
+  <ul id="exploreList"></ul>
+
+  <script>
+    async function loadExplore() {
+      const res = await fetch('/.netlify/functions/getExplore');
+      const data = await res.json();
+      const exploreList = document.getElementById('exploreList');
+      exploreList.innerHTML = '';
+      data.servers.forEach(s => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <strong>${s.name}</strong><br>
+          Created: ${new Date(s.created_at).toLocaleString()}<br>
+          <a href="/server.html?id=${s.id}">View Server</a>
+        `;
+        exploreList.appendChild(li);
+      });
+    }
+
+    loadExplore();
+  </script>
+</body>
+</html>
 
