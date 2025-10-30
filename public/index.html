@@ -11,8 +11,15 @@
 <body>
   <h1>Welcome to the Server Platform</h1>
   <a href="/login.html">Login</a> | <a href="/register.html">Register</a>
+  
   <h2>Explore Public Servers</h2>
   <ul id="exploreList"></ul>
+
+  <h2>Upload a File to Storage</h2>
+  <input type="text" id="fileName" placeholder="File name (e.g., test.html)">
+  <textarea id="fileContent" placeholder="File content here..." rows="5" cols="50"></textarea><br>
+  <button id="uploadBtn">Upload File</button>
+  <p id="uploadResult"></p>
 
   <script>
     async function loadExplore() {
@@ -43,10 +50,38 @@
 
     loadExplore();
 
-    // Check if user just registered (example: passed via URL query ?registered=true)
+    // Example: upload a file to Supabase storage
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const fileName = document.getElementById('fileName').value.trim();
+      const fileContent = document.getElementById('fileContent').value;
+
+      if (!fileName || !fileContent) {
+        alert('Please provide both file name and content.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/.netlify/functions/uploadFile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName, fileContent })
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          document.getElementById('uploadResult').textContent = `File "${fileName}" uploaded successfully!`;
+        } else {
+          document.getElementById('uploadResult').textContent = `Error: ${result.error}`;
+        }
+      } catch (err) {
+        console.error('Upload failed:', err);
+        document.getElementById('uploadResult').textContent = 'Upload failed.';
+      }
+    });
+
+    // Redirect after registration
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('registered') === 'true') {
-      // Redirect to profile creation
       window.location.href = '/profile.html';
     }
   </script>
