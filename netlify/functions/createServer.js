@@ -9,9 +9,11 @@ export async function handler(event) {
 
     const api_key = crypto.randomUUID();
 
-    const { data, error } = await supabase.from('servers').insert([
-      { owner_id, name, files, is_public, api_key }
-    ]).select().single();
+    const { data, error } = await supabase
+      .from('servers')
+      .insert([{ owner_id, name, files, is_public, api_key }])
+      .select()
+      .single();
 
     if (error) return { statusCode: 400, body: JSON.stringify(error) };
 
@@ -20,4 +22,3 @@ export async function handler(event) {
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 }
-
