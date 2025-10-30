@@ -14,8 +14,14 @@ export async function handler(event) {
 
     if (error) throw error;
 
-    return { statusCode: 200, body: JSON.stringify(user) };
+    return { 
+      statusCode: 200, 
+      body: JSON.stringify({ user }) // wrap in `user` key
+    };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ error: err.message }) 
+    };
   }
 }
