@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="loginForm">
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit">Login</button>
+  </form>
+  <div id="message"></div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const res = await fetch('/.netlify/functions/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.two_step) {
+        alert('2FA code sent to email');
+        // redirect to verify page
+        localStorage.setItem('temp_user_id', data.user_id);
+        window.location.href = '/verify.html';
+      } else {
+        localStorage.setItem('user_id', data.user_id);
+        window.location.href = '/profile.html';
+      }
+    });
+  </script>
+</body>
+</html>
 
