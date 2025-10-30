@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verify</title>
+</head>
+<body>
+  <h1>Enter Verification Code</h1>
+  <form id="verifyForm">
+    <input type="text" id="code" placeholder="Code" required />
+    <button type="submit">Verify</button>
+  </form>
+  <div id="message"></div>
+
+  <script>
+    const form = document.getElementById('verifyForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const code = document.getElementById('code').value;
+      const user_id = localStorage.getItem('temp_user_id');
+
+      const res = await fetch('/.netlify/functions/verify', {
+        method: 'POST',
+        body: JSON.stringify({ user_id, code })
+      });
+      const data = await res.json();
+      if (data.message) {
+        localStorage.setItem('user_id', user_id);
+        localStorage.removeItem('temp_user_id');
+        window.location.href = '/profile.html';
+      }
+      document.getElementById('message').innerText = data.error || '';
+    });
+  </script>
+</body>
+</html>
