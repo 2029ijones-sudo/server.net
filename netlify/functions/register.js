@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import fetch from 'node-fetch'; // To call verify.js
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
@@ -65,7 +64,7 @@ export async function handler(event) {
 
     if (error) return { statusCode: 400, body: JSON.stringify(error) };
 
-    // Call verify.js to send professional email
+    // Call verify.js to send professional email using built-in fetch
     await fetch(`${process.env.BASE_URL}/.netlify/functions/verify`, {
       method: 'POST',
       body: JSON.stringify({ user_id: user.id, action: 'send' }),
