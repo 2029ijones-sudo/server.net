@@ -1,238 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Server Platform Dashboard</title>
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f7fa;
-    }
-    #sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 220px;
-      height: 100%;
-      background: #1e1e2f;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      padding-top: 20px;
-    }
-    #sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 1.4rem; }
-    #sidebar button {
-      background: none;
-      border: none;
-      color: #fff;
-      text-align: left;
-      padding: 12px 20px;
-      margin: 5px 0;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    #sidebar button:hover { background: #343454; border-radius: 5px; }
-    #main { margin-left: 240px; padding: 20px; }
-    .section { display: none; }
-    .section.active { display: block; }
-    h1 { margin-top: 0; }
-    .card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-family: inherit;
-    }
-    button {
-      background-color: #1e1e2f;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 10px 15px;
-      cursor: pointer;
-    }
-    button:hover { background-color: #343454; }
-    #loginSignup { max-width: 400px; margin: 50px auto; display: none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Server Platform Dashboard</title>
+<link rel="stylesheet" href="/css/dashboard.css">
+<style>
+body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; }
+#sidebar { position: fixed; left: 0; top: 0; width: 220px; height: 100%; background: #1e1e2f; color: #fff; display: flex; flex-direction: column; padding-top: 20px; }
+#sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 1.4rem; }
+#sidebar button { background: none; border: none; color: #fff; text-align: left; padding: 12px 20px; margin: 5px 0; cursor: pointer; font-size: 1rem; }
+#sidebar button:hover { background: #343454; border-radius: 5px; }
+#main { margin-left: 240px; padding: 20px; }
+.section { display: none; }
+.section.active { display: block; }
+h1 { margin-top: 0; }
+.card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.card button { margin-top: 8px; padding: 6px 12px; cursor: pointer; }
+input, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; }
+button { background-color: #1e1e2f; color: #fff; border: none; border-radius: 4px; padding: 10px 15px; cursor: pointer; }
+button:hover { background-color: #343454; }
+#loginSignup { max-width: 400px; margin: 50px auto; display: none; }
+</style>
 </head>
 <body>
 
-  <!-- Sidebar Navigation -->
-  <div id="sidebar">
-    <h2>Dashboard</h2>
-    <button onclick="showSection('overview')">Overview</button>
-    <button onclick="showSection('profile')">Profile</button>
-    <button onclick="showSection('servers')">Servers</button>
-    <button onclick="showSection('alerts')">Alerts</button>
-    <button onclick="logout()">Logout</button>
+<div id="sidebar">
+  <h2>Dashboard</h2>
+  <button onclick="showSection('overview')">Overview</button>
+  <button onclick="showSection('profile')">Profile</button>
+  <button onclick="showSection('servers')">Servers</button>
+  <button onclick="showSection('alerts')">Alerts</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div id="main">
+
+  <!-- Login/Signup -->
+  <div id="loginSignup" class="card">
+    <div id="loginForm">
+      <h1>Login</h1>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <p>Don't have an account? <a href="#" onclick="toggleSignup()">Sign Up</a></p>
+    </div>
+
+    <div id="signupForm" style="display:none;">
+      <h1>Sign Up</h1>
+      <input type="text" id="signupUsername" placeholder="Username">
+      <input type="email" id="signupEmail" placeholder="Email">
+      <input type="password" id="signupPassword" placeholder="Password">
+      <button onclick="signup()">Register</button>
+      <p><a href="#" onclick="toggleSignup()">Back to Login</a></p>
+    </div>
   </div>
 
-  <!-- Main Content -->
-  <div id="main">
-
-    <!-- Login/Signup -->
-    <div id="loginSignup" class="card">
-      <div id="loginForm">
-        <h1>Login</h1>
-        <input type="email" id="loginEmail" placeholder="Email">
-        <input type="password" id="loginPassword" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <p>Don't have an account? <a href="#" onclick="toggleSignup()">Sign Up</a></p>
-      </div>
-
-      <div id="signupForm" style="display:none;">
-        <h1>Sign Up</h1>
-        <input type="text" id="signupUsername" placeholder="Username">
-        <input type="email" id="signupEmail" placeholder="Email">
-        <input type="password" id="signupPassword" placeholder="Password">
-        <button onclick="signup()">Register</button>
-        <p><a href="#" onclick="toggleSignup()">Back to Login</a></p>
-      </div>
-    </div>
-
-    <!-- Dashboard Sections -->
-    <div id="overview" class="section">
-      <h1>Welcome to your Dashboard</h1>
-      <p id="welcomeMsg">Loading user info...</p>
-    </div>
-
-    <div id="profile" class="section">
-      <h1>Profile</h1>
-      <div class="card">
-        <p>Username: <span id="username">Loading...</span></p>
-        <p>Email: <span id="email">Loading...</span></p>
-        <label for="newPassword">Change Password:</label>
-        <input type="password" id="newPassword" placeholder="New password">
-        <button onclick="changePassword()">Update Password</button>
-      </div>
-    </div>
-
-    <div id="servers" class="section">
-      <h1>Your Servers</h1>
-      <div class="card">
-        <input type="text" id="serverName" placeholder="Server Name">
-        <textarea id="serverFiles" placeholder="Paste your server HTML/JS content here"></textarea>
-        <button onclick="createServer()">Create Server</button>
-      </div>
-      <div id="serversList"></div>
-    </div>
-
-    <div id="alerts" class="section">
-      <h1>Your Alerts</h1>
-      <div id="alertsList"></div>
-    </div>
-
+  <div id="overview" class="section">
+    <h1>Welcome to your Dashboard</h1>
+    <p id="welcomeMsg">Loading user info...</p>
   </div>
 
-  <script>
-    let user;
+  <div id="profile" class="section">
+    <h1>Profile</h1>
+    <div class="card">
+      <p>Username: <span id="username">Loading...</span></p>
+      <p>Email: <span id="email">Loading...</span></p>
+      <label for="newPassword">Change Password:</label>
+      <input type="password" id="newPassword" placeholder="New password">
+      <button onclick="changePassword()">Update Password</button>
+    </div>
+  </div>
 
-    function showSection(sectionId) {
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      const sec = document.getElementById(sectionId);
-      if (sec) sec.classList.add('active');
+  <div id="servers" class="section">
+    <h1>Your Servers</h1>
+    <div class="card">
+      <input type="text" id="serverName" placeholder="Server Name">
+      <textarea id="serverFiles" placeholder="Paste your server HTML/JS content here"></textarea>
+      <button onclick="createServer()">Create Server</button>
+    </div>
+    <div id="serversList"></div>
+  </div>
+
+  <div id="alerts" class="section">
+    <h1>Your Alerts</h1>
+    <div id="alertsList"></div>
+  </div>
+
+</div>
+
+<script>
+let user;
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if(sec) sec.classList.add('active');
+}
+
+function toggleSignup() {
+  const login = document.getElementById('loginForm');
+  const signup = document.getElementById('signupForm');
+  login.style.display = login.style.display === 'none' ? 'block' : 'none';
+  signup.style.display = signup.style.display === 'none' ? 'block' : 'none';
+}
+
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+  if(!email || !password) return alert('Enter email and password');
+
+  try {
+    const res = await fetch('/.netlify/functions/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password})
+    });
+    const data = await res.json();
+    if(data.user_id) {
+      user = { id:data.user_id, username:data.username, email };
+      document.getElementById('loginSignup').style.display = 'none';
+      showSection('overview');
+      loadProfile();
+      loadServers();
+      loadAlerts();
+    } else {
+      alert(data.error || 'Login failed');
     }
+  } catch(e){ console.error(e); alert('Login failed'); }
+}
 
-    function toggleSignup() {
-      const login = document.getElementById('loginForm');
-      const signup = document.getElementById('signupForm');
-      login.style.display = login.style.display === 'none' ? 'block' : 'none';
-      signup.style.display = signup.style.display === 'none' ? 'block' : 'none';
+async function signup() {
+  const username = document.getElementById('signupUsername').value;
+  const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+  const password = document.getElementById('signupPassword').value;
+  if(!username||!email||!password) return alert('Complete all fields');
+
+  try {
+    const res = await fetch('/.netlify/functions/register', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username,email,password})
+    });
+    const data = await res.json();
+    if(data.user_id){
+      alert('Registered! Please login.');
+      toggleSignup();
+    } else alert(data.error || 'Registration failed');
+  } catch(e){ console.error(e); alert('Registration failed'); }
+}
+
+async function loadProfile() {
+  try {
+    const res = await fetch('/.netlify/functions/getCurrentUser');
+    const data = await res.json();
+    if(!data.user){
+      document.getElementById('loginSignup').style.display='block';
+      return;
     }
+    user = data.user;
+    document.getElementById('username').innerText = user.username;
+    document.getElementById('email').innerText = user.email;
+    document.getElementById('welcomeMsg').innerText = `Hello, ${user.username}!`;
+    document.getElementById('loginSignup').style.display = 'none';
+    showSection('overview');
+  } catch(e){ console.error(e); }
+}
 
-    async function login() {
-      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-      const password = document.getElementById('loginPassword').value;
-      if (!email || !password) return alert('Enter email and password');
+async function logout(){
+  try{
+    await fetch('/.netlify/functions/logout',{method:'POST'});
+    user=null;
+    document.getElementById('loginSignup').style.display='block';
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  } catch(e){console.error(e);}
+}
 
-      const res = await fetch('/.netlify/functions/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
+// Dashboard placeholders
+async function changePassword(){ /* ... */ }
+async function loadServers(){ /* ... */ }
+async function createServer(){ /* ... */ }
+async function deleteServer(id){ /* ... */ }
+async function loadAlerts(){
+  try{
+    const res = await fetch(`/.netlify/functions/getAlerts?user_id=${user?.id}`);
+    const data = await res.json();
+    const alertsList = document.getElementById('alertsList');
+    alertsList.innerHTML='';
+    data.alerts?.forEach(a=>{
+      const div = document.createElement('div');
+      div.className='card';
+      div.innerText=`[${a.type}] ${a.content}`;
+      alertsList.appendChild(div);
+    });
+  } catch(e){ console.error(e); }
+}
 
-      if (data.user_id) {
-        // store user ID
-        user = { id: data.user_id, username: data.username, email };
-        document.getElementById('loginSignup').style.display = 'none';
-        showSection('overview');
-        loadProfile();
-        loadServers();
-        loadAlerts();
-      } else {
-        alert(data.error || 'Login failed');
-      }
-    }
-
-    async function signup() {
-      const username = document.getElementById('signupUsername').value;
-      const email = document.getElementById('signupEmail').value.trim().toLowerCase();
-      const password = document.getElementById('signupPassword').value;
-      if (!username || !email || !password) return alert('Complete all fields');
-
-      const res = await fetch('/.netlify/functions/register', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ username, email, password })
-      });
-      const data = await res.json();
-
-      if (data.user_id) {
-        alert('Registered! Please login.');
-        toggleSignup();
-      } else {
-        alert(data.error || 'Registration failed');
-      }
-    }
-
-    async function loadProfile() {
-      try {
-        const res = await fetch('/.netlify/functions/getCurrentUser');
-        const data = await res.json();
-        if (!data.user) {
-          document.getElementById('loginSignup').style.display = 'block';
-          return;
-        }
-        user = data.user;
-        document.getElementById('username').innerText = user.username;
-        document.getElementById('email').innerText = user.email;
-        document.getElementById('welcomeMsg').innerText = `Hello, ${user.username}!`;
-        document.getElementById('loginSignup').style.display = 'none';
-        showSection('overview');
-      } catch(err) { console.error(err); }
-    }
-
-    async function logout() {
-      try {
-        await fetch('/.netlify/functions/logout', { method: 'POST' });
-        user = null;
-        document.getElementById('loginSignup').style.display = 'block';
-        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      } catch(err) { console.error(err); }
-    }
-
-    // Keep your existing dashboard functions placeholders
-    async function changePassword() { /* ... */ }
-    async function loadServers() { /* ... */ }
-    async function createServer() { /* ... */ }
-    async function deleteServer(id) { /* ... */ }
-    async function loadAlerts() { /* ... */ }
-
-    // Initial load
-    loadProfile().then(() => { if(user){ loadServers(); loadAlerts(); } });
-  </script>
+// Initial load
+loadProfile().then(()=>{ if(user){ loadServers(); loadAlerts(); } });
+</script>
 
 </body>
 </html>
