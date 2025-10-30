@@ -16,23 +16,39 @@
 
   <script>
     async function loadExplore() {
-      const res = await fetch('/.netlify/functions/getExplore');
-      const data = await res.json();
-      const exploreList = document.getElementById('exploreList');
-      exploreList.innerHTML = '';
-      data.servers.forEach(s => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <strong>${s.name}</strong><br>
-          Created: ${new Date(s.created_at).toLocaleString()}<br>
-          <a href="/server.html?id=${s.id}">View Server</a>
-        `;
-        exploreList.appendChild(li);
-      });
+      try {
+        const res = await fetch('/.netlify/functions/getExplore');
+        const data = await res.json();
+        const exploreList = document.getElementById('exploreList');
+        exploreList.innerHTML = '';
+
+        if (!data.servers || data.servers.length === 0) {
+          exploreList.innerHTML = '<li>No public servers yet.</li>';
+          return;
+        }
+
+        data.servers.forEach(s => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>${s.name}</strong><br>
+            Created: ${new Date(s.created_at).toLocaleString()}<br>
+            <a href="/server.html?id=${s.id}">View Server</a>
+          `;
+          exploreList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Failed to load servers:', err);
+      }
     }
 
     loadExplore();
+
+    // Check if user just registered (example: passed via URL query ?registered=true)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('registered') === 'true') {
+      // Redirect to profile creation
+      window.location.href = '/profile.html';
+    }
   </script>
 </body>
 </html>
-
