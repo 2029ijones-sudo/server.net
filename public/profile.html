@@ -1,46 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Profile</title>
+  <title>Your Profile</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { margin: 5px 0; padding: 8px; width: 100%; max-width: 300px; }
+    #serversList, #alertsList { list-style-type: none; padding: 0; }
+    li { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    .section { margin-top: 30px; }
+  </style>
 </head>
 <body>
   <h1>Your Profile</h1>
-  <button id="createServerBtn">Create Server</button>
-  <h2>Your Servers</h2>
-  <ul id="serversList"></ul>
-  <h2>Your Alerts</h2>
-  <ul id="alertsList"></ul>
+
+  <div class="section">
+    <h2>Account Info</h2>
+    <p>Username: <span id="username"></span></p>
+    <p>Email: <span id="email"></span></p>
+    <label for="newPassword">Change Password:</label>
+    <input type="password" id="newPassword" placeholder="New password">
+    <button id="changePasswordBtn">Update Password</button>
+  </div>
+
+  <div class="section">
+    <h2>Create New Server</h2>
+    <input type="text" id="serverName" placeholder="Server Name">
+    <textarea id="serverFiles" placeholder="Paste your server HTML/JS content here"></textarea>
+    <button id="createServerBtn">Create Server</button>
+  </div>
+
+  <div class="section">
+    <h2>Your Servers</h2>
+    <ul id="serversList"></ul>
+  </div>
+
+  <div class="section">
+    <h2>Your Alerts</h2>
+    <ul id="alertsList"></ul>
+  </div>
 
   <script>
-    const user_id = localStorage.getItem('user_id');
+    const user_id = localStorage.getItem('user_id'); // User ID saved from login
+
+    async function loadProfile() {
+      try {
+        const res = await fetch(`/.netlify/functions/getUser?user_id=${user_id}`);
+        const user = await res.json();
+        document.getElementById('username').innerText = user.username;
+        document.getElementById('email').innerText = user.email;
+      } catch (err) {
+        console.error('Failed to load user profile:', err);
+      }
+    }
+
+    async function changePassword() {
+      const newPassword = document.getElementById('newPassword').value;
+      if (!newPassword) return alert('Enter a new password');
+
+      const res = await fetch(`/.netlify/functions/changePassword`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id, newPassword })
+      });
+      const data = await res.json();
+      alert(data.message || 'Password updated');
+    }
 
     async function loadServers() {
-      const res = await fetch('/.netlify/functions/getExplore');
-      const data = await res.json();
-      const serversList = document.getElementById('serversList');
-      serversList.innerHTML = '';
-      data.servers.filter(s => s.owner_id === user_id).forEach(s => {
-        const li = document.createElement('li');
-        li.innerText = s.name;
-        serversList.appendChild(li);
-      });
+      try {
+        const res = await fetch('/.netlify/functions/getExplore');
+        const data = await res.json();
+        const serversList = document.getElementById('serversList');
+        serversList.innerHTML = '';
+        data.servers.filter(s => s.owner_id === user_id).forEach(s => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <strong>${s.name}</strong>
+            <button onclick="deleteServer('${s.id}')">Delete</button>
+            <a href="/server.html?id=${s.id}" target="_blank">View</a>
+          `;
+          serversList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Failed to load servers:', err);
+      }
     }
 
     async function loadAlerts() {
-      const res = await fetch(`/alerts?user_id=${user_id}`);
-      const data = await res.json();
-      const alertsList = document.getElementById('alertsList');
-      alertsList.innerHTML = '';
-      data.alerts.forEach(a => {
-        const li = document.createElement('li');
-        li.innerText = `[${a.type}] ${a.content}`;
-        alertsList.appendChild(li);
-      });
+      try {
+        const res = await fetch(`/.netlify/functions/getAlerts?user_id=${user_id}`);
+        const data = await res.json();
+        const alertsList = document.getElementById('alertsList');
+        alertsList.innerHTML = '';
+        data.alerts.forEach(a => {
+          const li = document.createElement('li');
+          li.innerText = `[${a.type}] ${a.content}`;
+          alertsList.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Failed to load alerts:', err);
+      }
     }
 
+    async function createServer() {
+      const name = document.getElementById('serverName').value;
+      const files = document.getElementById('serverFiles').value;
+
+      if (!name || !files) return alert('Enter server name and content');
+
+      // Upload to Supabase via uploadFile.js
+      const res = await fetch('/.netlify/functions/uploadFile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: `${name}.html`, fileContent: files })
+      });
+      const data = await res.json();
+      if (data.error) return alert(data.error);
+
+      // Save server info in database via a serverless function
+      await fetch('/.netlify/functions/createServer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner_id: user_id, name, files: files })
+      });
+
+      alert('Server created!');
+      loadServers();
+    }
+
+    async function deleteServer(serverId) {
+      if (!confirm('Are you sure you want to delete this server?')) return;
+      await fetch('/.netlify/functions/deleteServer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ server_id: serverId })
+      });
+      loadServers();
+    }
+
+    document.getElementById('createServerBtn').addEventListener('click', createServer);
+    document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
+
+    // Initial load
+    loadProfile();
     loadServers();
     loadAlerts();
   </script>
 </body>
 </html>
-
