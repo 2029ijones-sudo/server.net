@@ -1,1 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+</head>
+<body>
+  <h1>Your Profile</h1>
+  <button id="createServerBtn">Create Server</button>
+  <h2>Your Servers</h2>
+  <ul id="serversList"></ul>
+  <h2>Your Alerts</h2>
+  <ul id="alertsList"></ul>
+
+  <script>
+    const user_id = localStorage.getItem('user_id');
+
+    async function loadServers() {
+      const res = await fetch('/.netlify/functions/getExplore');
+      const data = await res.json();
+      const serversList = document.getElementById('serversList');
+      serversList.innerHTML = '';
+      data.servers.filter(s => s.owner_id === user_id).forEach(s => {
+        const li = document.createElement('li');
+        li.innerText = s.name;
+        serversList.appendChild(li);
+      });
+    }
+
+    async function loadAlerts() {
+      const res = await fetch(`/alerts?user_id=${user_id}`);
+      const data = await res.json();
+      const alertsList = document.getElementById('alertsList');
+      alertsList.innerHTML = '';
+      data.alerts.forEach(a => {
+        const li = document.createElement('li');
+        li.innerText = `[${a.type}] ${a.content}`;
+        alertsList.appendChild(li);
+      });
+    }
+
+    loadServers();
+    loadAlerts();
+  </script>
+</body>
+</html>
 
