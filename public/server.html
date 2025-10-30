@@ -1,1 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Server Details</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #messages { margin-top: 20px; }
+    .message { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1 id="serverName">Server</h1>
+  <p id="serverFiles"></p>
+  <h2>Messages / Comments</h2>
+  <ul id="messages"></ul>
+
+  <h3>Post a Message</h3>
+  <form id="messageForm">
+    <textarea id="content" placeholder="Write a message..." required></textarea><br>
+    <button type="submit">Send</button>
+  </form>
+  <div id="msgResponse"></div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const server_id = urlParams.get('id');
+    const user_id = localStorage.getItem('user_id'); // optional, user must be logged in
+
+    async function loadServer() {
+      const res = await fetch('/.netlify/functions/getExplore');
+      const data = await res.json();
+      const server = data.servers.find(s => s.id === server_id);
+      if (!server) {
+        document.getElementById('serverName').innerText = 'Server Not Found';
+        return;
+      }
+      document.getElementById('serverName').innerText = server.name;
+      document.getElementById('serverFiles').innerText = JSON.stringify(server.files, null, 2);
+
+      // Load messages
+      const msgRes = await fetch(`/.netlify/functions/getMessages?server_id=${server_id}`);
+      const msgData = await msgRes.json();
+      const messagesList = document.getElementById('messages');
+      messagesList.innerHTML = '';
+      msgData.messages.forEach(m => {
+        const li = document.createElement('li');
+        li.className = 'message';
+        li.innerHTML = `<strong>${m.role || 'User'}</strong>: ${m.content} <br><small>${new Date(m.created_at).toLocaleString()}</small>`;
+        messagesList.appendChild(li);
+      });
+    }
+
+    loadServer();
+
+    // Post a message
+    const form = document.getElementById('messageForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const content = document.getElementById('content').value;
+      if (!user_id) return alert('You must be logged in to post a message.');
+
+      const res = await fetch('/.netlify/functions/postMessage', {
+        method: 'POST',
+        body: JSON.stringify({ user_id, server_id, role: 'user', content })
+      });
+      const data = await res.json();
+      if (data.message) {
+        document.getElementById('msgResponse').innerText = 'Message posted!';
+        document.getElementById('content').value = '';
+        loadServer();
+      } else {
+        document.getElementById('msgResponse').innerText = data.error || 'Error posting message';
+      }
+    });
+  </script>
+</body>
+</html>
 
