@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Explore</title>
+</head>
+<body>
+  <h1>Explore Servers</h1>
+  <ul id="exploreList"></ul>
+
+  <script>
+    async function loadExplore() {
+      const res = await fetch('/.netlify/functions/getExplore');
+      const data = await res.json();
+      const exploreList = document.getElementById('exploreList');
+      exploreList.innerHTML = '';
+      data.servers.forEach(s => {
+        const li = document.createElement('li');
+        li.innerText = s.name;
+        exploreList.appendChild(li);
+      });
+    }
+
+    loadExplore();
+  </script>
+</body>
+</html>
