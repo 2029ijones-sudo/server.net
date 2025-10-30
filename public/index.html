@@ -23,11 +23,7 @@
       flex-direction: column;
       padding-top: 20px;
     }
-    #sidebar h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 1.4rem;
-    }
+    #sidebar h2 { text-align: center; margin-bottom: 30px; font-size: 1.4rem; }
     #sidebar button {
       background: none;
       border: none;
@@ -38,20 +34,10 @@
       cursor: pointer;
       font-size: 1rem;
     }
-    #sidebar button:hover {
-      background: #343454;
-      border-radius: 5px;
-    }
-    #main {
-      margin-left: 240px;
-      padding: 20px;
-    }
-    .section {
-      display: none;
-    }
-    .section.active {
-      display: block;
-    }
+    #sidebar button:hover { background: #343454; border-radius: 5px; }
+    #main { margin-left: 240px; padding: 20px; }
+    .section { display: none; }
+    .section.active { display: block; }
     h1 { margin-top: 0; }
     .card {
       background: #fff;
@@ -59,11 +45,6 @@
       margin-bottom: 15px;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .card button {
-      margin-top: 8px;
-      padding: 6px 12px;
-      cursor: pointer;
     }
     input, textarea {
       width: 100%;
@@ -81,16 +62,8 @@
       padding: 10px 15px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #343454;
-    }
-
-    /* Login/Signup card override */
-    #loginSignup {
-      max-width: 400px;
-      margin: 50px auto;
-      display: none;
-    }
+    button:hover { background-color: #343454; }
+    #loginSignup { max-width: 400px; margin: 50px auto; display: none; }
   </style>
 </head>
 <body>
@@ -108,16 +81,18 @@
   <!-- Main Content -->
   <div id="main">
 
-    <!-- Login/Signup Form -->
+    <!-- Login/Signup -->
     <div id="loginSignup" class="card">
-      <h1>Login</h1>
-      <input type="email" id="loginEmail" placeholder="Email">
-      <input type="password" id="loginPassword" placeholder="Password">
-      <button onclick="login()">Login</button>
-      <p>Don't have an account? <a href="#" onclick="toggleSignup()">Sign Up</a></p>
+      <div id="loginForm">
+        <h1>Login</h1>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p>Don't have an account? <a href="#" onclick="toggleSignup()">Sign Up</a></p>
+      </div>
 
       <div id="signupForm" style="display:none;">
-        <h2>Sign Up</h2>
+        <h1>Sign Up</h1>
         <input type="text" id="signupUsername" placeholder="Username">
         <input type="email" id="signupEmail" placeholder="Email">
         <input type="password" id="signupPassword" placeholder="Password">
@@ -126,13 +101,12 @@
       </div>
     </div>
 
-    <!-- Overview Section -->
+    <!-- Dashboard Sections -->
     <div id="overview" class="section">
       <h1>Welcome to your Dashboard</h1>
       <p id="welcomeMsg">Loading user info...</p>
     </div>
 
-    <!-- Profile Section -->
     <div id="profile" class="section">
       <h1>Profile</h1>
       <div class="card">
@@ -144,7 +118,6 @@
       </div>
     </div>
 
-    <!-- Servers Section -->
     <div id="servers" class="section">
       <h1>Your Servers</h1>
       <div class="card">
@@ -155,7 +128,6 @@
       <div id="serversList"></div>
     </div>
 
-    <!-- Alerts Section -->
     <div id="alerts" class="section">
       <h1>Your Alerts</h1>
       <div id="alertsList"></div>
@@ -173,27 +145,29 @@
     }
 
     function toggleSignup() {
-      const login = document.getElementById('loginEmail').parentElement;
+      const login = document.getElementById('loginForm');
       const signup = document.getElementById('signupForm');
+      login.style.display = login.style.display === 'none' ? 'block' : 'none';
       signup.style.display = signup.style.display === 'none' ? 'block' : 'none';
     }
 
     async function login() {
-      const email = document.getElementById('loginEmail').value;
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
       const password = document.getElementById('loginPassword').value;
       if (!email || !password) return alert('Enter email and password');
 
       const res = await fetch('/.netlify/functions/login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email, password})
+        body: JSON.stringify({ email, password })
       });
       const data = await res.json();
-      if (data.user) {
-        user = data.user;
+
+      if (data.user_id) {
+        // store user ID
+        user = { id: data.user_id, username: data.username, email };
         document.getElementById('loginSignup').style.display = 'none';
-        document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
-        document.getElementById('overview').style.display = 'block';
+        showSection('overview');
         loadProfile();
         loadServers();
         loadAlerts();
@@ -204,17 +178,18 @@
 
     async function signup() {
       const username = document.getElementById('signupUsername').value;
-      const email = document.getElementById('signupEmail').value;
+      const email = document.getElementById('signupEmail').value.trim().toLowerCase();
       const password = document.getElementById('signupPassword').value;
       if (!username || !email || !password) return alert('Complete all fields');
 
       const res = await fetch('/.netlify/functions/register', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({username, email, password})
+        body: JSON.stringify({ username, email, password })
       });
       const data = await res.json();
-      if (data.user) {
+
+      if (data.user_id) {
         alert('Registered! Please login.');
         toggleSignup();
       } else {
@@ -224,7 +199,7 @@
 
     async function loadProfile() {
       try {
-        const res = await fetch('/.netlify/functions/getCurrentUser', { method: 'GET' });
+        const res = await fetch('/.netlify/functions/getCurrentUser');
         const data = await res.json();
         if (!data.user) {
           document.getElementById('loginSignup').style.display = 'block';
@@ -236,9 +211,7 @@
         document.getElementById('welcomeMsg').innerText = `Hello, ${user.username}!`;
         document.getElementById('loginSignup').style.display = 'none';
         showSection('overview');
-      } catch(err) {
-        console.error(err);
-      }
+      } catch(err) { console.error(err); }
     }
 
     async function logout() {
@@ -246,21 +219,20 @@
         await fetch('/.netlify/functions/logout', { method: 'POST' });
         user = null;
         document.getElementById('loginSignup').style.display = 'block';
-        document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
       } catch(err) { console.error(err); }
     }
 
-    // Keep existing dashboard functions
-    async function changePassword() { /* your previous code */ }
-    async function loadServers() { /* your previous code */ }
-    async function createServer() { /* your previous code */ }
-    async function deleteServer(id) { /* your previous code */ }
-    async function loadAlerts() { /* your previous code */ }
+    // Keep your existing dashboard functions placeholders
+    async function changePassword() { /* ... */ }
+    async function loadServers() { /* ... */ }
+    async function createServer() { /* ... */ }
+    async function deleteServer(id) { /* ... */ }
+    async function loadAlerts() { /* ... */ }
 
     // Initial load
-    loadProfile().then(() => {
-      if (user) { loadServers(); loadAlerts(); }
-    });
+    loadProfile().then(() => { if(user){ loadServers(); loadAlerts(); } });
   </script>
+
 </body>
 </html>
