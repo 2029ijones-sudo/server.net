@@ -40,14 +40,31 @@
   </div>
 
   <script>
-    const user_id = localStorage.getItem('user_id'); // User ID saved from login
+    let user_id;
+    let username;
+    let email;
 
     async function loadProfile() {
       try {
-        const res = await fetch(`/.netlify/functions/getUser?user_id=${user_id}`);
-        const user = await res.json();
-        document.getElementById('username').innerText = user.username;
-        document.getElementById('email').innerText = user.email;
+        // Fetch the current logged-in user from your serverless function
+        const res = await fetch('/.netlify/functions/getCurrentUser', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!data.user) {
+          alert('You are not logged in');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        user_id = data.user.id;
+        username = data.user.username;
+        email = data.user.email;
+
+        document.getElementById('username').innerText = username;
+        document.getElementById('email').innerText = email;
       } catch (err) {
         console.error('Failed to load user profile:', err);
       }
@@ -57,7 +74,7 @@
       const newPassword = document.getElementById('newPassword').value;
       if (!newPassword) return alert('Enter a new password');
 
-      const res = await fetch(`/.netlify/functions/changePassword`, {
+      const res = await fetch('/.netlify/functions/changePassword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id, newPassword })
@@ -117,7 +134,7 @@
       const data = await res.json();
       if (data.error) return alert(data.error);
 
-      // Save server info in database via a serverless function
+      // Save server info in database
       await fetch('/.netlify/functions/createServer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,9 +159,10 @@
     document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
 
     // Initial load
-    loadProfile();
-    loadServers();
-    loadAlerts();
+    loadProfile().then(() => {
+      loadServers();
+      loadAlerts();
+    });
   </script>
 </body>
 </html>
