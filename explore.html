@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore Servers</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #1e1e2f;
+      margin-bottom: 20px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #fff;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    li:hover {
+      background: #e0e0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Explore Servers</h1>
+  <ul id="exploreList"></ul>
+
+  <script>
+    async function loadExplore() {
+      try {
+        const res = await fetch('/getExplore'); // root endpoint
+        const data = await res.json();
+        const exploreList = document.getElementById('exploreList');
+        exploreList.innerHTML = '';
+
+        data.servers.forEach(s => {
+          const li = document.createElement('li');
+          li.innerText = s.name;
+          li.onclick = () => {
+            window.location.href = `/server.html?id=${s.id}`;
+          };
+          exploreList.appendChild(li);
+        });
+      } catch(err) {
+        console.error('Failed to load servers:', err);
+        document.getElementById('exploreList').innerHTML = '<li>Error loading servers.</li>';
+      }
+    }
+
+    loadExplore();
+  </script>
+</body>
+</html>

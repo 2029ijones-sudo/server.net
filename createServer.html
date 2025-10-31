@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Server</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { color: #1e1e2f; }
+    form {
+      max-width: 500px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-family: inherit;
+    }
+    button {
+      background-color: #1e1e2f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #343454; }
+    #message { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Create Server</h1>
+  <form id="serverForm">
+    <input type="text" id="name" placeholder="Server Name" required />
+    <textarea id="files" placeholder='{"index.html":"<h1>Hello</h1>"}'></textarea>
+    <label>
+      Public:
+      <input type="checkbox" id="is_public" checked />
+    </label>
+    <button type="submit">Create</button>
+  </form>
+  <div id="message"></div>
+
+  <script>
+    const form = document.getElementById('serverForm');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      // Replace with your global user object if available
+      const owner_id = localStorage.getItem('user_id');
+      if (!owner_id) {
+        document.getElementById('message').innerText = 'You must be logged in to create a server.';
+        return;
+      }
+
+      const name = document.getElementById('name').value.trim();
+      let files;
+      try {
+        files = JSON.parse(document.getElementById('files').value || '{}');
+      } catch {
+        document.getElementById('message').innerText = 'Invalid JSON in Files field.';
+        return;
+      }
+      const is_public = document.getElementById('is_public').checked;
+
+      try {
+        // Fetch now points to root endpoint
+        const res = await fetch('/createServer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ owner_id, name, files, is_public })
+        });
+
+        const data = await res.json();
+        document.getElementById('message').innerText = data.server ? '✅ Server Created!' : `❌ ${data.error || 'Unknown error'}`;
+      } catch(err) {
+        console.error(err);
+        document.getElementById('message').innerText = 'Error creating server. Check console.';
+      }
+    });
+  </script>
+</body>
+</html>
